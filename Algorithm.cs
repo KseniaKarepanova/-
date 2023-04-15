@@ -20,16 +20,14 @@ namespace Алгоритм_Нелдера_Мида
             //Создаем рандомом n+1 точку (формируем начальный симплекс)
             for (int j = 1; j < n + 1; j++)
             {
-                double[] temp_X = new double[n];
-                temp_X[j - 1] = rnd.NextDouble() + point0.X[j - 1];
+                Point point = new Point(new double[n], function);
+                point[j - 1] = rnd.NextDouble() + point0[j - 1];
                 for (int i = 0; i < n; i++)
                 {
                     if (i != j - 1)
-                        temp_X[i] = rnd.NextDouble() + point0.X[i];
+                        point[i] = rnd.NextDouble() + point0[i];
 
                 }
-                double f = function.calc(temp_X);
-                Point point = new Point(temp_X, f);
                 Simplex.Add(point);
             }
             return Simplex;
@@ -42,7 +40,7 @@ namespace Алгоритм_Нелдера_Мида
             {
                 for (int j = 0; j < Simplex.Count(); j++)
                 {
-                    if ((i != j) && (Simplex[i].Function < Simplex[j].Function))
+                    if ((i != j) && (Simplex[i].Function.calc(Simplex[i].X) < Simplex[j].Function.calc(Simplex[j].X)))
                     {
                         Point temp;
                         temp = Simplex[i];
@@ -60,71 +58,45 @@ namespace Алгоритм_Нелдера_Мида
         //Поиск центра тяжести(3 пункт)
         public Point Center_of_gravity(List<Point> Simplex, IFunction function)
         {
-
-            double[] temp = new double[Simplex[0].X.Count()];
-
+            Point x_centr = new Point(new double[Simplex[0].X.Count()], function);
             for (int i = 0; i < Simplex.Count() - 1; i++)
             {
-                for (int j = 0; j < Simplex[0].X.Count(); j++)
-                {
-                    temp[j] = temp[j] + Simplex[i].X[j];
-                }
+                x_centr = x_centr + Simplex[i];
             }
-            for (int i = 0; i < Simplex[0].X.Count(); i++)
-            {
-                temp[i] = temp[i] / Simplex[0].X.Count();
-            }
-            Point X_centr = new Point(temp, function.calc(temp));
-            return X_centr;
+
+            x_centr = x_centr / Simplex[0].X.Count();
+            return x_centr;
         }
 
         //Отражение худшей точки относительно центра(пункт 4)
         public Point Reflection(Point X_centr, Point X_worst, double Alfa, IFunction function)
         {
-
-
-            double[] temp = new double[X_centr.X.Count()];
-            for (int i = 0; i < X_centr.X.Count(); i++)
-            {
-                temp[i] = (1 + Alfa) * X_centr.X[i] - Alfa * X_worst.X[i];
-            }
-            Point X_reflection = new Point(temp, function.calc(temp));
-            return X_reflection;
+            return (1 + Alfa) * X_centr - Alfa * X_worst;
         }
 
         public bool Dispersion(List<Point> Simplex, double eps)
         {
             double disp = 0;
-            double[] temp = new double[Simplex[0].X.Count()];
+            Point x_centr = new Point(new double[Simplex[0].X.Count()], Simplex[0].Function);
             //ищем среднее значение
             for (int i = 0; i < Simplex.Count(); i++)
             {
-                for (int j = 0; j < Simplex[0].X.Count(); j++)
-                {
-                    temp[j] = temp[j] + Simplex[i].X[j];
-                }
+                x_centr = x_centr + Simplex[i];
             }
-            for (int i = 0; i < Simplex[0].X.Count(); i++)
-                temp[i] = temp[i] / Simplex.Count();
+
+            x_centr = x_centr / Simplex.Count();
 
             //вычитаем из всех точек 
-            double[] new_S = new double[Simplex[0].X.Count()];
-
+            Point new_S = new Point(new double[Simplex[0].X.Count()], Simplex[0].Function);
 
             for (int i = 0; i < Simplex.Count(); i++)
             {
-                for (int j = 0; j < Simplex[0].X.Count(); j++)
-                {
-                    new_S[j] = Simplex[i].X[j] - temp[j];
-                }
+                new_S = Simplex[i] - x_centr;
             }
 
-            for (int i = 0; i < Simplex[0].X.Count(); i++)
-            {
-                new_S[i] = Math.Pow(new_S[i], 2);
-            }
+            new_S = new_S * new_S;
 
-            disp = new_S.Sum();
+            disp = new_S.X.Sum();
             disp = disp / (Simplex.Count() - 1);
             disp = Math.Sqrt(disp);
 
@@ -136,29 +108,36 @@ namespace Алгоритм_Нелдера_Мида
         //Сжатие(шаг 6)
         public Point Compression(Point X_worst, Point X_centr, double Betta, IFunction function)
         {
+            return Betta * X_worst + (1 - Betta) * X_centr;
+        }
 
 
-            double[] temp = new double[X_centr.X.Count()];
-            for (int i = 0; i < X_centr.X.Count(); i++)
+        public Point Elongation(Point X_reflection, Point X_centr, double Gamma, IFunction function)
+        {
+            return (1 - Gamma) * X_centr + Gamma * X_reflection;
+        }
+
+        public void Global_Compression(List<Point> Simplex, Point x_best)
+        {
+            for (int i = 1; i < Simplex.Count(); i++)
             {
-                temp[i] = Betta * X_worst.X[i] + (1 - Betta) * X_centr.X[i];
+                Simplex[i] = x_best + (Simplex[i] - x_best) / 2;
             }
-            Point X_compression = new Point(temp, function.calc(temp));
-            return X_compression;
         }
 
         public Point Run(int n, IFunction function, Point point0, double Alfa = 1, double Betta = 0.5, double Gamma = 2)
         {
             List<Point> Simplex = new List<Point>();
+
             //1 шаг: формируем начальный симплекс
             Simplex = Set_of_initial_points(n, point0, function);
             int count_step = 100;
             double eps = 0.001;
-           
+
             //Условие останова - заданное количество шагов
             for (int step = 0; ((step < count_step) && (Dispersion(Simplex, eps) == false)); step++)
             {
-                
+
                 //2 шаг: сортирауем точки в порядке возрастания
                 Simplex = Sort(Simplex);
                 //выбираем лучшую, худшую и нормальную точку
@@ -175,69 +154,46 @@ namespace Алгоритм_Нелдера_Мида
                 Point X_compression = Simplex[0];
 
                 //5 шаг: Куча проверок
-                if (X_reflection.Function < X_best.Function)
+                if (X_reflection.Function_value < X_best.Function_value)
                 {
-                    double[] temp = new double[n];
-                    for (int i = 0; i < n; i++)
-                    {
-                        temp[i] = (1 - Gamma) * X_centr.X[i] + Gamma * X_reflection.X[i];
-                    }
-                    Point X_elongation = new Point(temp, function.calc(temp));
-
-                    if (X_elongation.Function < X_reflection.Function)
+                    Point X_elongation = Elongation(X_reflection, X_centr, Gamma, function);
+                    if (X_elongation.Function_value < X_reflection.Function_value)
                     {
                         X_worst = X_elongation;
                         Simplex[n] = X_worst;
                         continue;
-
                     }
-
-                    else if (X_elongation.Function > X_reflection.Function)
+                    else if (X_elongation.Function_value > X_reflection.Function_value)
                     {
                         X_worst = X_reflection;
                         Simplex[n] = X_worst;
                         continue;
-
                     }
 
                 }
 
-                else
+                else if ((X_best.Function_value < X_reflection.Function_value) && (X_reflection.Function_value < X_good.Function_value))
                 {
-                    if ((X_best.Function < X_reflection.Function) && (X_reflection.Function < X_good.Function))
-                    {
-                        X_worst = X_reflection;
-                        Simplex[n] = X_worst;
+                    X_worst = X_reflection;
+                    Simplex[n] = X_worst;
 
-                        continue;
-
-                    }
-
-                    else
-                    {
-                        if ((X_good.Function < X_reflection.Function) && (X_reflection.Function < X_worst.Function))
-                        {
-                            Point temp;
-                            temp = X_worst;
-                            X_worst = X_reflection;
-                            X_reflection = temp;
-
-                            Simplex[n] = X_worst;
-
-                            //6
-                            X_compression = Compression(X_worst, X_centr, Betta, function);
-                        }
-                        else if (X_worst.Function < X_reflection.Function)
-                        {
-
-                            X_compression = Compression(X_worst, X_centr, Betta, function);
-
-                        }
-                    }
+                    continue;
                 }
+
+                else if ((X_good.Function_value < X_reflection.Function_value) && (X_reflection.Function_value < X_worst.Function_value))
+                {
+                    Point temp;
+                    temp = X_worst;
+                    X_worst = X_reflection;
+                    X_reflection = temp;
+
+                    Simplex[n] = X_worst;
+                }
+
+                X_compression = Compression(X_worst, X_centr, Betta, function);
 
                 //7 
-                if (X_compression.Function < X_worst.Function)
+                if (X_compression.Function_value < X_worst.Function_value)
                 {
                     X_worst = X_compression;
                     Simplex[n] = X_worst;
@@ -245,32 +201,15 @@ namespace Алгоритм_Нелдера_Мида
                 }
 
                 //8 шаг: 
-                if (X_compression.Function > X_worst.Function)
+                if (X_compression.Function_value > X_worst.Function_value)
                 {
-
-                    for (int i = 1; i < n + 1; i++)
-                    {
-                        for (int j = 0; j < n; j++)
-                        {
-                            Simplex[i].X[j] = X_best.X[j] + (Simplex[i].X[j] - X_best.X[j]) / 2;
-
-                        }
-
-                    }
-
+                    Global_Compression(Simplex, X_best);
                 }
-
-
             }
 
             Sort(Simplex);
             return (Simplex[0]);
-
         }
-
-
-
-
 
     }
 }

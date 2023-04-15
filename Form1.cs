@@ -18,15 +18,15 @@ namespace Алгоритм_Нелдера_Мида
             int n = 2;
             Function1 function = new Function1();
             Point point;
-            Point point0 = new Point(new double[] { 0, 0 }, function.calc(new double[] { 0, 0 }));
+            Point point0 = new Point(new double[] { 0, 0 }, function);
             point=algorithm.Run(n, function, point0);
 
             richTextBox1.Text = richTextBox1.Text + "Point: \n";
             for(int i=0;i<n;i++)
-            richTextBox1.Text = richTextBox1.Text + point.X[i].ToString()+"  ";
+            richTextBox1.Text = richTextBox1.Text + point[i].ToString()+"  ";
 
             richTextBox1.Text =richTextBox1.Text +"\n" +"Function=";
-            richTextBox1.Text = richTextBox1.Text + point.Function.ToString();
+            richTextBox1.Text = richTextBox1.Text + point.Function_value.ToString();
 
 
         }

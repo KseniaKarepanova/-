@@ -8,16 +8,16 @@ namespace Алгоритм_Нелдера_Мида
 {
     public class Point
     {
-        double[] x;
-        double function;
-        public Point(double[] x, double function)
+        private double[] x;
+        private IFunction function;
+
+        public Point(double[] x, IFunction function)
         {
             this.x = x;
             this.function = function;
 
         }
-
-        public double Function
+        public IFunction Function
         {
             get
             {
@@ -28,6 +28,16 @@ namespace Алгоритм_Нелдера_Мида
                 function = value;
             }
         }
+
+        public double Function_value
+        {
+            get
+            {
+                return function.calc(x);
+            }
+            
+        }
+
         public double[] X
         {
             get
@@ -40,6 +50,83 @@ namespace Алгоритм_Нелдера_Мида
             }
         }
 
+        public double this[int index]
+        {
+            get
+            {
+                return x[index];
+            }
+            set
+            {
+                x[index] = value;
+            }
+        }
+
+        public static Point operator +(Point p1, Point p2)
+        {
+
+            Point p_new = new Point(new double[p1.X.Count()], p1.Function);
+            for (int i = 0; i < p1.X.Count(); i++)
+            {
+                p_new[i] = p1[i] + p2[i];
+
+            }
+
+            return p_new;
+        }
+
+
+        public static Point operator *(double a, Point p)
+        {
+
+            Point p_new = new Point(new double[p.X.Count()], p.Function);
+            for (int i = 0; i < p.X.Count(); i++)
+            {
+                p_new[i] = a * p[i];
+
+            }
+
+            return p_new;
+        }
+
+        public static Point operator /(Point p1, double a)
+        {
+
+            Point p_new = new Point(new double[p1.X.Count()], p1.Function);
+            for (int i = 0; i < p1.X.Count(); i++)
+            {
+                p_new[i] = p1[i] / a;
+
+            }
+
+            return p_new;
+        }
+
+        public static Point operator -(Point p1, Point p2)
+        {
+
+            Point p_new = new Point(new double[p1.X.Count()], p1.Function);
+            for (int i = 0; i < p1.X.Count(); i++)
+            {
+                p_new[i] = p1[i] - p2[i];
+
+            }
+
+            return p_new;
+        }
+
+        public static Point operator *(Point p1, Point p2)
+        {
+
+            Point p_new = new Point(new double[p1.X.Count()], p1.Function);
+            for (int i = 0; i < p1.X.Count(); i++)
+            {
+                p_new[i] = p1[i] * p2[i];
+
+            }
+
+            return p_new;
+        }
 
     }
 }
