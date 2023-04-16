@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Алгоритм_Нелдера_Мида
 {
-    public class Point
+    public class Point : ICloneable
     {
         private double[] x;
         private IFunction function;
@@ -35,7 +35,7 @@ namespace Алгоритм_Нелдера_Мида
             {
                 return function.calc(x);
             }
-            
+
         }
 
         public double[] X
@@ -126,6 +126,13 @@ namespace Алгоритм_Нелдера_Мида
             }
 
             return p_new;
+        }
+
+        public object Clone()
+        {
+            double[] x_copy = new double[x.Length];
+            x.CopyTo(x_copy, 0);
+            return new Point(x_copy, function);
         }
 
     }

@@ -36,21 +36,25 @@ namespace Алгоритм_Нелдера_Мида
         //Функия для сортировки значений функций в порядке возрастания(2 пункт)
         public List<Point> Sort(List<Point> Simplex)
         {
-            for (int i = 0; i < Simplex.Count(); i++)
+            List<Point> Simplex_copy = new List<Point>();
+            foreach (Point point in Simplex)
+                Simplex_copy.Add((Point)point.Clone());
+
+            for (int i = 0; i < Simplex_copy.Count(); i++)
             {
-                for (int j = 0; j < Simplex.Count(); j++)
+                for (int j = 0; j < Simplex_copy.Count(); j++)
                 {
-                    if ((i != j) && (Simplex[i].Function.calc(Simplex[i].X) < Simplex[j].Function.calc(Simplex[j].X)))
+                    if ((i != j) && (Simplex_copy[i].Function.calc(Simplex_copy[i].X) < Simplex_copy[j].Function.calc(Simplex_copy[j].X)))
                     {
                         Point temp;
-                        temp = Simplex[i];
-                        Simplex[i] = Simplex[j];
-                        Simplex[j] = temp;
+                        temp = Simplex_copy[i];
+                        Simplex_copy[i] = Simplex_copy[j];
+                        Simplex_copy[j] = temp;
                     }
 
                 }
             }
-            return Simplex;
+            return Simplex_copy;
 
         }
 
@@ -119,9 +123,13 @@ namespace Алгоритм_Нелдера_Мида
 
         public void Global_Compression(List<Point> Simplex, Point x_best)
         {
-            for (int i = 1; i < Simplex.Count(); i++)
+            List<Point> Simplex_copy = new List<Point>();
+            foreach (Point point in Simplex)
+                Simplex_copy.Add((Point)point.Clone());
+
+            for (int i = 1; i < Simplex_copy.Count(); i++)
             {
-                Simplex[i] = x_best + (Simplex[i] - x_best) / 2;
+                Simplex_copy[i] = x_best + (Simplex_copy[i] - x_best) / 2;
             }
         }
 
